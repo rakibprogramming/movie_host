@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Movie Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .video-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .video-item {
+            display: flex;
+            flex-direction: column;
+            /* stack name and buttons */
+            background: #1e1e1e;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .video-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            word-break: break-word;
+            /* break long words if needed */
+            white-space: normal;
+            /* allow multiple lines */
+        }
+
+        .video-buttons {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+        }
+
+        .video-buttons button {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #007bff;
+            color: #fff;
+            transition: background 0.2s;
+        }
+
+        .video-buttons button:hover {
+            background: #0056b3;
+        }
+
+        .video-buttons button.delete {
+            background: #dc3545;
+        }
+
+        .video-buttons button.delete:hover {
+            background: #a71d2a;
+        }
+
+        .video-buttons button.add-subtitle {
+            background: #28a745;
+        }
+
+        .video-buttons button.add-subtitle:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>My Movie Server</h1>
+    <button onclick="window.location.href='/add'"
+        style="padding: 8px 15px; margin-left: 15px; border-radius: 4px; border: none; background: #007bff; color: #fff; cursor: pointer; font-weight: bold;">
+        Add Video
+    </button><br><br>
+
+    <div class="video-list">
+        {% for video in videos %}
+        <div class="video-item">
+            <div class="video-name">{{ video }}</div>
+            <div class="video-buttons">
+                <button onclick="window.location.href='/view?filename={{ video }}'">View</button>
+                <button class="add-subtitle">Add Subtitle</button>
+                <button class="delete">Delete</button>
+            </div>
+        </div>
+        {% empty %}
+        <p>No videos found in media folder.</p>
+        {% endfor %}
+    </div>
+
+    <script>
+        document.querySelectorAll('.add-subtitle').forEach(button => {
+            button.addEventListener('click', async () => {
+                const videoItem = button.closest('.video-item');
+                const videoName = videoItem.querySelector('.video-name').innerText;
+
+                // Ask for subtitle URL
+                const url = prompt(`Enter subtitle URL for "${videoName}":`);
+                if (!url) return;
+
+                // Send to backend
+                try {
+                    const response = await fetch('/add_subtitle/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'  // make sure you have CSRF token in template
+                        },
+                        body: JSON.stringify({
+                            video: videoName,
+                            url: url
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Subtitle added successfully!');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (err) {
+                    alert('Request failed: ' + err);
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.querySelectorAll('.delete').forEach(button => {
+            button.addEventListener('click', async () => {
+                const videoItem = button.closest('.video-item');
+                const videoName = videoItem.querySelector('.video-name').innerText;
+
+                // Ask for confirmation
+                const confirmDelete = confirm(`Are you sure you want to delete "${videoName}"?`);
+                if (!confirmDelete) return;
+
+                // Send request to backend
+                try {
+                    const response = await fetch('/delete_video/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ video: videoName })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Video deleted successfully!');
+                        // Remove item from DOM
+                        videoItem.remove();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (err) {
+                    alert('Request failed: ' + err);
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

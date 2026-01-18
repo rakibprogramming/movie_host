@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Video</title>
+<style>
+body { font-family: Arial; background: #121212; color: #fff; padding: 20px; }
+input { width: 80%; padding: 8px; margin-right: 10px; border-radius: 4px; border: 1px solid #ccc; }
+button { padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; background: #007bff; color: #fff; }
+button:hover { background: #0056b3; }
+#progress-container { margin-top: 20px; width: 80%; max-width: 500px; background: #1e1e1e; border-radius: 6px; overflow: hidden; }
+#progress-bar { width: 0%; height: 20px; background: #28a745; text-align: center; line-height: 20px; color: #fff; }
+#speed { margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<h1>Add Video by URL</h1>
+<input type="text" id="video-url" placeholder="Enter video URL here">
+<button id="add-btn">Add</button>
+
+<div id="progress-container">
+    <div id="progress-bar">0%</div>
+</div>
+<div id="speed">Speed: 0 KB/s</div>
+
+<script>
+const addBtn = document.getElementById('add-btn');
+const progressBar = document.getElementById('progress-bar');
+const speedDiv = document.getElementById('speed');
+
+addBtn.addEventListener('click', async () => {
+    const url = document.getElementById('video-url').value;
+    if (!url) return alert('Enter a URL');
+
+    try {
+        // Start the download
+        const resp = await fetch('/start_download/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ url })
+        });
+
+        const data = await resp.json();
+        if (!data.success) return alert('Error: ' + data.error);
+
+        // Start polling for status every second
+        const interval = setInterval(async () => {
+            const statusResp = await fetch('/download_status/');
+            const statusData = await statusResp.json();
+
+            progressBar.style.width = statusData.percent + '%';
+            progressBar.innerText = statusData.percent + '%';
+            speedDiv.innerText = `Speed: ${statusData.speed} KB/s`;
+
+            if (statusData.percent >= 100) clearInterval(interval);
+        }, 1000);
+
+    } catch (err) {
+        alert('Request failed: ' + err);
+    }
+});
+</script>
+
+</body>
+</html>

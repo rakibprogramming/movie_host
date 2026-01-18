@@ -1,0 +1,65 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+    <style>
+        /* Body theme */
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* Video player container */
+        #video_player {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        /* Video element */
+        #player {
+            width: 100%;
+            border-radius: 6px;
+            background: #000;
+        }
+
+        /* Optional: subtitle font color if browser supports styling */
+        ::cue {
+            color: #fff;
+            background: rgba(0,0,0,0.6);
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Video Player</h1>
+
+<div id="video_player">
+    <video id="player" controls crossorigin webkit-playsinline>
+        <source src="{% url 'stream_video' video_file %}" type="video/mp4" />
+        
+        {% for sub in subtitles %}
+        <track kind="subtitles" label="{{ sub }}" srclang="en"
+               src="{% url 'stream_subtitle' sub %}" {% if forloop.first %}default{% endif %}>
+        {% endfor %}
+    </video>
+</div>
+
+
+</body>
+
+</html>
