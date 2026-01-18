@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 from .stream import stream_video
 from .stream import stream_subtitle
-from ..add_file import start_download, download_status, add
+from .add_file import start_download, download_status, add
 
 from django.urls import re_path
 
